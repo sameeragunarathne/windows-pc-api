@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright (c) 2015, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+  ~
+  ~  WSO2 Inc. licenses this file to you under the Apache License,
+  ~  Version 2.0 (the "License"); you may not use this file except
+  ~  in compliance with the License.
+  ~  You may obtain a copy of the License at
+  ~
+  ~  http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~  Unless required by applicable law or agreed to in writing,
+  ~  software distributed under the License is distributed on an
+  ~  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  ~  KIND, either express or implied. See the License for the
+  ~  specific language governing permissions and limitations
+  ~  under the License.
+  -->
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:jaxrs="http://cxf.apache.org/jaxrs"
+       xmlns:jaxws="http://cxf.apache.org/jaxws"
+       xsi:schemaLocation="
+         http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd
+         http://cxf.apache.org/jaxrs http://cxf.apache.org/schemas/jaxrs.xsd
+         http://cxf.apache.org/jaxws http://cxf.apache.org/schemas/jaxws.xsd">
+
+    <import resource="classpath:META-INF/cxf/cxf.xml"/>
+    <import resource="classpath:META-INF/cxf/cxf-extension-soap.xml"/>
+    <import resource="classpath:META-INF/cxf/cxf-servlet.xml"/>
+
+    <jaxrs:server id="DiscoveryService_rest" address="/discovery/get">
+        <jaxrs:serviceBeans>
+            <ref bean="DiscoveryService_rest_bean"/>
+        </jaxrs:serviceBeans>
+    </jaxrs:server>
+
+    <!--<jaxrs:server id="SecurityTokenService_rest" address="/sts/get">-->
+        <!--<jaxrs:serviceBeans>-->
+            <!--<ref bean="SecurityTokenService_rest_bean"/>-->
+        <!--</jaxrs:serviceBeans>-->
+    <!--</jaxrs:server>-->
+
+    <jaxrs:server id="federated" address="/federated">
+        <jaxrs:serviceBeans>
+            <ref bean="fed_bean"/>
+        </jaxrs:serviceBeans>
+    </jaxrs:server>
+
+    <jaxws:endpoint
+            id="DiscoveryService"
+            implementor="org.wso2.carbon.mdm.mobileservices.windows.services.discovery.impl.DiscoveryServiceImpl"
+            address="/discovery/post"/>
+
+    <jaxws:endpoint
+            id="EnrollmentPolicyService"
+            implementor="org.wso2.carbon.mdm.mobileservices.windows.services.xcep.impl.CertificateEnrollmentPolicyServiceImpl"
+            address="/certificatepolicy/xcep">
+        <jaxws:properties>
+            <entry key="ws-security.ut.validator" value-ref="customvalidator"/>
+        </jaxws:properties>
+        <!--<jaxws:inInterceptors>-->
+        <!--<ref bean="wss4jInInterceptor"/>-->
+        <!--</jaxws:inInterceptors>-->
+        <jaxws:handlers>
+            <bean id="securityheader"
+                  class="org.wso2.carbon.mdm.mobileservices.windows.common.util.securityheader"/>
+        </jaxws:handlers>
+    </jaxws:endpoint>
+
+    <jaxws:endpoint
+            id="CertificateEnrollmentService"
+            implementor="org.wso2.carbon.mdm.mobileservices.windows.services.wstep.impl.CertificateEnrollmentServiceImpl"
+            address="/deviceenrolment/wstep">
+        <jaxws:properties>
+            <entry key="ws-security.ut.validator" value-ref="customvalidator"/>
+        </jaxws:properties>
+        <!--<jaxws:inInterceptors>-->
+        <!--<ref bean="wss4jInInterceptor"/>-->
+        <!--</jaxws:inInterceptors>-->
+
+        <jaxws:handlers>
+            <bean id="serviceOptionsHandler"
+                  class="org.wso2.carbon.mdm.mobileservices.windows.services.wstep.util.MessageHandler"/>
+        </jaxws:handlers>
+    </jaxws:endpoint>
+    <jaxrs:server id="Syncmlinitial" address="/syncml">
+        <jaxrs:serviceBeans>
+            <ref bean="Syncml_initial_bean"/>
+        </jaxrs:serviceBeans>
+    </jaxrs:server>
+
+    <bean id="DiscoveryService_rest_bean"
+          class="org.wso2.carbon.mdm.mobileservices.windows.services.discovery.impl.DiscoveryServiceImpl"/>
+
+    <!--<bean id="SecurityTokenService_rest_bean"-->
+          <!--class="org.wso2.carbon.mdm.mobileservices.windows.services.sts.impl.SecurityTokenServiceImpl"/>-->
+
+    <bean id="wss4jInInterceptor" class="org.apache.cxf.ws.security.wss4j.WSS4JInInterceptor">
+        <property name="properties">
+            <map>
+                <entry key="action" value="UsernameToken"/>
+                <entry key="passwordType" value="PasswordText"/>
+                <entry key="isBSPCompliant" value="false"/>
+                <entry key="allowNamespaceQualifiedPasswordTypes" value="true"/>
+            </map>
+        </property>
+    </bean>
+
+    <bean id="Syncml_initial_bean"
+          class="org.wso2.carbon.mdm.mobileservices.windows.services.syncml.impl.SyncmlServiceImpl"/>
+    <bean id="customvalidator"
+          class="org.wso2.carbon.mdm.mobileservices.windows.common.util.UsernameTokenValidator"/>
+    <bean id="fed_bean"
+          class="org.wso2.carbon.mdm.mobileservices.windows.services.sts.impl.SecurityTokenServiceImpl"/>
+
+</beans>
+
